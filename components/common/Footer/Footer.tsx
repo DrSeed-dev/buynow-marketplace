@@ -218,7 +218,7 @@ export function Footer() {
                   style={{ color: "var(--foreground)" }}>{group}</h3>
                 <ul className="flex flex-col gap-2.5">
                   {links.map((link) => (
-                    <li key={link.href}>
+                    <li key={link.label}>
                       <Link href={link.href}
                         className="text-sm transition-colors duration-200
                           hover:text-[var(--color-brand-600)]"
