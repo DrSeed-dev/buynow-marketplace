@@ -1,36 +1,30 @@
 "use client"
 
-import { use, useState } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   Star, Heart, ShoppingCart, BadgeCheck,
   Truck, Shield, RotateCcw, ChevronLeft,
-  Minus, Plus, Share2,
+  Minus, Plus, Share2, ChevronRight,
 } from "lucide-react"
-import { MOCK_PRODUCTS, formatNaira, getDiscountPercent } from "@/lib/constants"
+import { getDiscountPercent } from "@/lib/constants"
+import { MOCK_PRODUCTS } from "@/lib/constants"
 import { useCartStore } from "@/store/cartStore"
 import { useWishlistStore } from "@/store/wishlistStore"
+import { useLocale } from "@/providers/CurrencyLanguageContext"
 import { PageWrapper } from "@/components/common/PageWrapper"
 import { ProductCard } from "@/components/product/ProductCard"
 import { cn } from "@/lib/utils"
-import { notFound } from "next/navigation"
+import type { Product } from "@/types/product"
 
 interface Props {
-  params: Promise<{ slug: string }>
+  product: Product
 }
 
-export default function ProductDetailPage({ params }: Props) {
-  // Next.js 15 — params is a Promise, unwrap with use()
-  const { slug } = use(params)
-
-  const product = MOCK_PRODUCTS.find((p) => p.slug === slug)
-  if (!product) notFound()
-
-  return <ProductDetail product={product} />
-}
-
-function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOCK_PRODUCTS.find>> }) {
+export function ProductDetailClient({ product }: Props) {
+  const router = useRouter()
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity,       setQuantity]      = useState(1)
   const [addedToCart,    setAddedToCart]   = useState(false)
@@ -38,6 +32,7 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
   const addToCart    = useCartStore((s) => s.addItem)
   const toggleWish   = useWishlistStore((s) => s.toggle)
   const isWishlisted = useWishlistStore((s) => s.isWishlisted(product.id))
+  const { convertPrice, t } = useLocale()
 
   const discount = product.originalPrice
     ? getDiscountPercent(product.price, product.originalPrice)
@@ -53,23 +48,46 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
     setTimeout(() => setAddedToCart(false), 2000)
   }
 
+  function handleBack() {
+    if (window.history.length > 1) {
+      router.back()
+    } else {
+      router.push("/products")
+    }
+  }
+
   return (
-    <PageWrapper className="py-8">
+    <PageWrapper className="py-6">
 
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm mb-8">
-        <Link href="/" className="hover:opacity-70 transition-opacity"
-          style={{ color: "var(--muted-foreground)" }}>Home</Link>
-        <span style={{ color: "var(--border)" }}>/</span>
-        <Link href="/products" className="hover:opacity-70 transition-opacity"
-          style={{ color: "var(--muted-foreground)" }}>Products</Link>
-        <span style={{ color: "var(--border)" }}>/</span>
-        <span className="font-semibold truncate max-w-[200px]"
-          style={{ color: "var(--foreground)" }}>{product.name}</span>
-      </nav>
+      {/* ── BACK BUTTON + BREADCRUMB ── */}
+      <div className="flex flex-col gap-2 mb-6">
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold
+            w-fit px-3 py-2 -ml-3 rounded-xl transition-all duration-150
+            hover:bg-[var(--accent)]"
+          style={{ color: "var(--color-brand-600)" }}
+        >
+          <ChevronLeft size={16} strokeWidth={2.5} />
+          {t("product.backToProducts")}
+        </button>
 
-      {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-16">
+        <nav className="flex items-center gap-1.5 text-xs" aria-label="Breadcrumb">
+          <Link href="/products"
+            className="font-semibold hover:opacity-70 transition-opacity"
+            style={{ color: "var(--muted-foreground)" }}>
+            {t("products.allProducts")}
+          </Link>
+          <ChevronRight size={12} style={{ color: "var(--border)" }} />
+          <span className="font-semibold truncate max-w-[200px] sm:max-w-sm"
+            style={{ color: "var(--foreground)" }}>
+            {product.name}
+          </span>
+        </nav>
+      </div>
+
+      {/* ── MAIN GRID ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-16">
 
         {/* Images */}
         <div className="flex flex-col gap-4">
@@ -78,7 +96,9 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
             <Image
               src={product.images[selectedImage] ?? product.images[0]}
               alt={product.name}
-              fill className="object-cover" priority
+              fill
+              className="object-cover"
+              priority
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
             {discount && (
@@ -92,10 +112,11 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
               <div className="absolute top-4 right-4 px-3 py-1 rounded-xl
                 text-sm font-black text-white"
                 style={{ backgroundColor: "var(--color-brand-600)" }}>
-                NEW
+                {t("product.new")}
               </div>
             )}
           </div>
+
           {product.images.length > 1 && (
             <div className="flex gap-3">
               {product.images.map((img, i) => (
@@ -114,13 +135,11 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
         </div>
 
         {/* Info */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-5">
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold"
-              style={{ color: "var(--muted-foreground)" }}>
-              {product.vendor.name}
-            </span>
+              style={{ color: "var(--muted-foreground)" }}>{product.vendor.name}</span>
             {product.vendor.isVerified && (
               <BadgeCheck size={16} style={{ color: "var(--color-brand-600)" }} />
             )}
@@ -137,7 +156,7 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
-              {[1,2,3,4,5].map((s) => (
+              {[1, 2, 3, 4, 5].map((s) => (
                 <Star key={s} size={16}
                   fill={s <= Math.round(product.rating) ? "#f59e0b" : "none"}
                   color={s <= Math.round(product.rating) ? "#f59e0b" : "var(--border)"} />
@@ -147,23 +166,23 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
               {product.rating}
             </span>
             <span className="text-sm" style={{ color: "var(--muted-foreground)" }}>
-              ({product.reviewCount} reviews)
+              ({product.reviewCount} {t("product.reviews")})
             </span>
           </div>
 
-          <div className="flex items-baseline gap-3">
+          <div className="flex items-baseline gap-3 flex-wrap">
             <span className="text-3xl font-black" style={{ color: "var(--color-brand-600)" }}>
-              {formatNaira(product.price)}
+              {convertPrice(product.price)}
             </span>
             {product.originalPrice && (
               <>
                 <span className="text-lg line-through"
                   style={{ color: "var(--muted-foreground)" }}>
-                  {formatNaira(product.originalPrice)}
+                  {convertPrice(product.originalPrice)}
                 </span>
                 <span className="text-sm font-black px-2 py-0.5 rounded-lg text-white"
                   style={{ backgroundColor: "var(--color-error)" }}>
-                  Save {discount}%
+                  {t("product.save", { percent: discount ?? 0 })}
                 </span>
               </>
             )}
@@ -174,35 +193,38 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
           </p>
 
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{
-              backgroundColor:
-                product.stock > 10 ? "var(--color-success)"
-                : product.stock > 0 ? "var(--color-warning)"
-                : "var(--color-error)",
-            }} />
+            <div className="w-2 h-2 rounded-full"
+              style={{
+                backgroundColor:
+                  product.stock > 10 ? "var(--color-success)"
+                  : product.stock > 0 ? "var(--color-warning)"
+                  : "var(--color-error)",
+              }} />
             <span className="text-sm font-medium" style={{ color: "var(--foreground)" }}>
-              {product.stock > 10 ? "In Stock"
-                : product.stock > 0 ? `Only ${product.stock} left`
-                : "Out of Stock"}
+              {product.stock > 10
+                ? t("product.inStock")
+                : product.stock > 0
+                ? t("product.lowStock", { count: product.stock })
+                : t("product.outOfStock")}
             </span>
           </div>
 
           {product.stock > 0 && (
             <div className="flex items-center gap-4">
               <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
-                Quantity:
+                {t("product.quantity")}:
               </span>
               <div className="flex items-center rounded-xl border overflow-hidden"
                 style={{ borderColor: "var(--border)" }}>
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-10 h-10 flex items-center justify-center hover:opacity-70"
+                  className="w-11 h-11 flex items-center justify-center hover:opacity-70"
                   style={{ color: "var(--foreground)" }}>
                   <Minus size={15} />
                 </button>
                 <span className="w-12 text-center text-sm font-bold"
                   style={{ color: "var(--foreground)" }}>{quantity}</span>
                 <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  className="w-10 h-10 flex items-center justify-center hover:opacity-70"
+                  className="w-11 h-11 flex items-center justify-center hover:opacity-70"
                   style={{ color: "var(--foreground)" }}>
                   <Plus size={15} />
                 </button>
@@ -211,7 +233,9 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
           )}
 
           <div className="flex gap-3">
-            <button onClick={handleAddToCart} disabled={product.stock === 0}
+            <button
+              onClick={handleAddToCart}
+              disabled={product.stock === 0}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2",
                 "h-14 rounded-2xl font-bold text-base text-white shadow-md transition-all duration-200",
@@ -222,7 +246,7 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
               )}
               style={{ backgroundColor: "var(--color-brand-600)" }}>
               <ShoppingCart size={20} />
-              {addedToCart ? "Added!" : "Add to Cart"}
+              {addedToCart ? t("product.added") : t("product.addToCart")}
             </button>
 
             <button onClick={() => toggleWish(product)}
@@ -236,8 +260,9 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
               <Heart size={20} fill={isWishlisted ? "#ef4444" : "none"} />
             </button>
 
-            <button className="w-14 h-14 rounded-2xl border-2 flex items-center
-              justify-center transition-all duration-200 hover:scale-105"
+            <button
+              className="w-14 h-14 rounded-2xl border-2 flex items-center
+                justify-center transition-all duration-200 hover:scale-105"
               style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
               aria-label="Share">
               <Share2 size={18} />
@@ -247,14 +272,15 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
           <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl border"
             style={{ backgroundColor: "var(--muted)", borderColor: "var(--border)" }}>
             {[
-              { icon: Truck,     label: "Fast Delivery" },
-              { icon: Shield,    label: "Secure Payment" },
-              { icon: RotateCcw, label: "Easy Returns" },
+              { icon: Truck,     label: t("product.fastDelivery") },
+              { icon: Shield,    label: t("product.securePayment") },
+              { icon: RotateCcw, label: t("product.easyReturns") },
             ].map(({ icon: Icon, label }) => (
               <div key={label} className="flex flex-col items-center gap-1.5 text-center">
                 <Icon size={18} style={{ color: "var(--color-brand-600)" }} />
-                <span className="text-xs font-semibold"
-                  style={{ color: "var(--foreground)" }}>{label}</span>
+                <span className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
+                  {label}
+                </span>
               </div>
             ))}
           </div>
@@ -271,7 +297,6 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
               </span>
             ))}
           </div>
-
         </div>
       </div>
 
@@ -280,12 +305,12 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-black" style={{ color: "var(--foreground)" }}>
-              Related Products
+              {t("product.relatedProducts")}
             </h2>
             <Link href={`/products?category=${product.category}`}
               className="text-sm font-semibold hover:opacity-70 transition-opacity"
               style={{ color: "var(--color-brand-600)" }}>
-              View all →
+              {t("product.viewAll")} →
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -295,16 +320,6 @@ function ProductDetail({ product }: { product: NonNullable<ReturnType<typeof MOC
           </div>
         </section>
       )}
-
-      <div className="mt-12">
-        <Link href="/products"
-          className="inline-flex items-center gap-2 text-sm font-semibold
-            hover:opacity-70 transition-opacity"
-          style={{ color: "var(--color-brand-600)" }}>
-          <ChevronLeft size={16} /> Back to Products
-        </Link>
-      </div>
-
     </PageWrapper>
   )
 }

@@ -5,7 +5,8 @@ import Image from "next/image"
 import { Heart, ShoppingCart, Star, BadgeCheck } from "lucide-react"
 import { useCartStore } from "@/store/cartStore"
 import { useWishlistStore } from "@/store/wishlistStore"
-import { formatNaira, getDiscountPercent } from "@/lib/constants"
+import { getDiscountPercent } from "@/lib/constants"
+import { useLocale } from "@/providers/CurrencyLanguageContext"
 import type { Product } from "@/types/product"
 import { cn } from "@/lib/utils"
 
@@ -15,30 +16,27 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, view = "grid" }: ProductCardProps) {
-  const addToCart     = useCartStore((s) => s.addItem)
-  const toggleWish    = useWishlistStore((s) => s.toggle)
-  const isWishlisted  = useWishlistStore((s) => s.isWishlisted(product.id))
+  const addToCart    = useCartStore((s) => s.addItem)
+  const toggleWish   = useWishlistStore((s) => s.toggle)
+  const isWishlisted = useWishlistStore((s) => s.isWishlisted(product.id))
+  // convertPrice and t come from LocaleProvider — updates globally
+  const { convertPrice, t } = useLocale()
 
-  const discount = product.originalPrice
+  const discount     = product.originalPrice
     ? getDiscountPercent(product.price, product.originalPrice)
     : null
-
   const isOutOfStock = product.stock === 0
 
   // ── LIST VIEW ──────────────────────────────────────────────
   if (view === "list") {
     return (
       <div
-        className="flex gap-4 p-4 rounded-2xl border transition-all duration-200
-          hover:shadow-md"
-        style={{
-          backgroundColor: "var(--card)",
-          borderColor: "var(--border)",
-        }}
+        className="flex gap-3 p-3 sm:p-4 rounded-2xl border transition-all duration-200 hover:shadow-md"
+        style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
       >
-        {/* Image */}
+        {/* Image — fixed size, never grows */}
         <Link href={`/products/${product.slug}`} className="flex-shrink-0">
-          <div className="relative w-28 h-28 rounded-xl overflow-hidden">
+          <div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden">
             <Image
               src={product.images[0]}
               alt={product.name}
@@ -47,22 +45,25 @@ export function ProductCard({ product, view = "grid" }: ProductCardProps) {
               sizes="112px"
             />
             {discount && (
-              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5
-                rounded-md text-[10px] font-black text-white"
-                style={{ backgroundColor: "var(--color-error)" }}>
+              <span
+                className="absolute top-1.5 left-1.5 px-1.5 py-0.5
+                  rounded-md text-[10px] font-black text-white"
+                style={{ backgroundColor: "var(--color-error)" }}
+              >
                 -{discount}%
               </span>
             )}
           </div>
         </Link>
 
-        {/* Info */}
-        <div className="flex-1 flex flex-col justify-between">
-          <div>
-            <div className="flex items-start justify-between gap-2">
-              <Link href={`/products/${product.slug}`}>
+        {/* Info — takes remaining space, clamps content */}
+        <div className="flex-1 flex flex-col justify-between min-w-0">
+          <div className="min-w-0">
+            {/* Title row with wishlist */}
+            <div className="flex items-start justify-between gap-1">
+              <Link href={`/products/${product.slug}`} className="min-w-0">
                 <h3
-                  className="font-bold text-base leading-tight hover:opacity-70
+                  className="font-bold text-sm leading-tight hover:opacity-70
                     transition-opacity line-clamp-2"
                   style={{ color: "var(--foreground)" }}
                 >
@@ -72,22 +73,20 @@ export function ProductCard({ product, view = "grid" }: ProductCardProps) {
               <button
                 onClick={() => toggleWish(product)}
                 aria-label="Toggle wishlist"
-                className="flex-shrink-0 p-1.5 rounded-full transition-colors duration-200"
+                className="flex-shrink-0 p-1 rounded-full transition-colors duration-200 ml-1"
                 style={{ color: isWishlisted ? "#ef4444" : "var(--muted-foreground)" }}
               >
-                <Heart size={18} fill={isWishlisted ? "#ef4444" : "none"} />
+                <Heart size={15} fill={isWishlisted ? "#ef4444" : "none"} />
               </button>
             </div>
 
-            <p className="text-sm mt-1 line-clamp-2" style={{ color: "var(--muted-foreground)" }}>
-              {product.description}
-            </p>
-
             {/* Rating */}
-            <div className="flex items-center gap-1.5 mt-2">
+            <div className="flex items-center gap-1 mt-1.5">
               <div className="flex items-center gap-0.5">
-                {[1,2,3,4,5].map((s) => (
-                  <Star key={s} size={12}
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    size={11}
                     fill={s <= Math.round(product.rating) ? "#f59e0b" : "none"}
                     color={s <= Math.round(product.rating) ? "#f59e0b" : "var(--border)"}
                   />
@@ -99,31 +98,34 @@ export function ProductCard({ product, view = "grid" }: ProductCardProps) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-baseline gap-2">
-              <span className="text-lg font-black" style={{ color: "var(--color-brand-600)" }}>
-                {formatNaira(product.price)}
+          {/* Price + Cart button — stacked on very small screens, row on sm+ */}
+          <div className="flex flex-col xs:flex-row items-start xs:items-center
+            justify-between gap-2 mt-2">
+            <div className="flex items-baseline gap-1.5 flex-shrink-0">
+              <span className="text-base font-black" style={{ color: "var(--color-brand-600)" }}>
+                {convertPrice(product.price)}
               </span>
               {product.originalPrice && (
-                <span className="text-sm line-through" style={{ color: "var(--muted-foreground)" }}>
-                  {formatNaira(product.originalPrice)}
+                <span className="text-xs line-through" style={{ color: "var(--muted-foreground)" }}>
+                  {convertPrice(product.originalPrice)}
                 </span>
               )}
             </div>
+
             <button
               onClick={() => !isOutOfStock && addToCart(product)}
               disabled={isOutOfStock}
               className={cn(
-                "flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-bold",
-                "text-white transition-all duration-200",
+                "flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold",
+                "text-white transition-all duration-200 flex-shrink-0 whitespace-nowrap",
                 isOutOfStock
                   ? "opacity-40 cursor-not-allowed"
                   : "hover:opacity-90 hover:-translate-y-0.5"
               )}
               style={{ backgroundColor: "var(--color-brand-600)" }}
             >
-              <ShoppingCart size={15} />
-              {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+              <ShoppingCart size={13} />
+              {isOutOfStock ? t("product.outOfStock") : t("product.addToCart")}
             </button>
           </div>
         </div>
@@ -136,10 +138,7 @@ export function ProductCard({ product, view = "grid" }: ProductCardProps) {
     <div
       className="group relative flex flex-col rounded-2xl border overflow-hidden
         transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
-      style={{
-        backgroundColor: "var(--card)",
-        borderColor: "var(--border)",
-      }}
+      style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
     >
       {/* Image container */}
       <Link href={`/products/${product.slug}`} className="relative aspect-square overflow-hidden">
@@ -154,24 +153,30 @@ export function ProductCard({ product, view = "grid" }: ProductCardProps) {
         {/* Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
           {discount && (
-            <span className="px-2 py-0.5 rounded-lg text-[11px] font-black text-white"
-              style={{ backgroundColor: "var(--color-error)" }}>
+            <span
+              className="px-2 py-0.5 rounded-lg text-[11px] font-black text-white"
+              style={{ backgroundColor: "var(--color-error)" }}
+            >
               -{discount}%
             </span>
           )}
           {product.isNew && (
-            <span className="px-2 py-0.5 rounded-lg text-[11px] font-black text-white"
-              style={{ backgroundColor: "var(--color-brand-600)" }}>
-              NEW
+            <span
+              className="px-2 py-0.5 rounded-lg text-[11px] font-black text-white"
+              style={{ backgroundColor: "var(--color-brand-600)" }}
+            >
+              {t("product.new")}
             </span>
           )}
         </div>
 
         {/* Out of stock overlay */}
         {isOutOfStock && (
-          <div className="absolute inset-0 flex items-center justify-center"
-            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-            <span className="text-white font-bold text-sm">Out of Stock</span>
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          >
+            <span className="text-white font-bold text-sm">{t("product.outOfStock")}</span>
           </div>
         )}
       </Link>
@@ -218,8 +223,10 @@ export function ProductCard({ product, view = "grid" }: ProductCardProps) {
         {/* Rating */}
         <div className="flex items-center gap-1.5">
           <div className="flex items-center gap-0.5">
-            {[1,2,3,4,5].map((s) => (
-              <Star key={s} size={11}
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Star
+                key={s}
+                size={11}
                 fill={s <= Math.round(product.rating) ? "#f59e0b" : "none"}
                 color={s <= Math.round(product.rating) ? "#f59e0b" : "var(--border)"}
               />
@@ -234,11 +241,11 @@ export function ProductCard({ product, view = "grid" }: ProductCardProps) {
         <div className="flex items-center justify-between mt-auto pt-1">
           <div>
             <p className="text-base font-black" style={{ color: "var(--color-brand-600)" }}>
-              {formatNaira(product.price)}
+              {convertPrice(product.price)}
             </p>
             {product.originalPrice && (
               <p className="text-xs line-through" style={{ color: "var(--muted-foreground)" }}>
-                {formatNaira(product.originalPrice)}
+                {convertPrice(product.originalPrice)}
               </p>
             )}
           </div>
@@ -246,7 +253,7 @@ export function ProductCard({ product, view = "grid" }: ProductCardProps) {
           <button
             onClick={() => !isOutOfStock && addToCart(product)}
             disabled={isOutOfStock}
-            aria-label="Add to cart"
+            aria-label={t("product.addToCart")}
             className={cn(
               "w-9 h-9 rounded-xl flex items-center justify-center",
               "text-white transition-all duration-200",

@@ -1,9 +1,7 @@
-// components/dashboard/OrderHistoryTable.tsx
-// Reusable order table component — used in dashboard/orders page.
-// Shows cards on mobile, table on desktop.
+"use client"
 
 import { Package, Clock, CheckCircle, XCircle, Truck } from "lucide-react"
-import { formatNaira } from "@/lib/constants"
+import { useLocale } from "@/providers/CurrencyLanguageContext"
 import type { Order } from "@/types/order"
 
 interface OrderHistoryTableProps {
@@ -20,6 +18,9 @@ const statusConfig = {
 }
 
 export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
+  // convertPrice replaces formatNaira — updates when currency changes globally
+  const { convertPrice, t } = useLocale()
+
   if (orders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-4">
@@ -28,9 +29,11 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
           <Package size={28} style={{ color: "var(--muted-foreground)" }} />
         </div>
         <div className="text-center">
-          <p className="font-bold" style={{ color: "var(--foreground)" }}>No orders yet</p>
+          <p className="font-bold" style={{ color: "var(--foreground)" }}>
+            {t("orders.noOrders")}
+          </p>
           <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
-            Your order history will appear here
+            {t("orders.noOrdersSub")}
           </p>
         </div>
       </div>
@@ -67,9 +70,8 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
                     day: "numeric", month: "short", year: "numeric"
                   })}
                 </span>
-                <span className="text-sm font-black"
-                  style={{ color: "var(--foreground)" }}>
-                  {formatNaira(order.total)}
+                <span className="text-sm font-black" style={{ color: "var(--foreground)" }}>
+                  {convertPrice(order.total)}
                 </span>
               </div>
             </div>
@@ -82,7 +84,13 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
         <table className="w-full">
           <thead>
             <tr style={{ backgroundColor: "var(--muted)" }}>
-              {["Order ID", "Date", "Items", "Total", "Status"].map((h) => (
+              {[
+                t("orders.orderId"),
+                t("orders.date"),
+                t("orders.items"),
+                t("orders.total"),
+                t("orders.status"),
+              ].map((h) => (
                 <th key={h}
                   className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider"
                   style={{ color: "var(--muted-foreground)" }}>{h}</th>
@@ -107,15 +115,13 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
                     </span>
                   </td>
                   <td className="px-5 py-4">
-                    <span className="text-sm font-medium"
-                      style={{ color: "var(--foreground)" }}>
+                    <span className="text-sm font-medium" style={{ color: "var(--foreground)" }}>
                       {order.items.map((i) => i.productName).join(", ")}
                     </span>
                   </td>
                   <td className="px-5 py-4">
-                    <span className="text-sm font-black"
-                      style={{ color: "var(--foreground)" }}>
-                      {formatNaira(order.total)}
+                    <span className="text-sm font-black" style={{ color: "var(--foreground)" }}>
+                      {convertPrice(order.total)}
                     </span>
                   </td>
                   <td className="px-5 py-4">

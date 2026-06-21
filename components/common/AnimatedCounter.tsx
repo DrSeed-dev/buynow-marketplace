@@ -10,8 +10,6 @@ interface AnimatedCounterProps {
   decimals?: number
 }
 
-// This hook detects when an element enters the viewport
-// so we only start counting when the user can actually see it
 function useInView() {
   const ref = useRef<HTMLSpanElement>(null)
   const [inView, setInView] = useState(false)
@@ -21,7 +19,6 @@ function useInView() {
       ([entry]) => {
         if (entry.isIntersecting) {
           setInView(true)
-          // Once triggered, stop observing
           observer.disconnect()
         }
       },
@@ -46,23 +43,14 @@ export function AnimatedCounter({
 
   useEffect(() => {
     if (!inView) return
-
     let startTime: number
-    const startValue = 0
 
     function animate(timestamp: number) {
       if (!startTime) startTime = timestamp
       const progress = Math.min((timestamp - startTime) / duration, 1)
-
-      // Ease out — starts fast, slows down at the end
       const eased = 1 - Math.pow(1 - progress, 3)
-      const current = startValue + (end - startValue) * eased
-
-      setCount(current)
-
-      if (progress < 1) {
-        requestAnimationFrame(animate)
-      }
+      setCount((end) * eased)
+      if (progress < 1) requestAnimationFrame(animate)
     }
 
     requestAnimationFrame(animate)
@@ -71,9 +59,7 @@ export function AnimatedCounter({
   return (
     <span ref={ref}>
       {prefix}
-      {decimals > 0
-        ? count.toFixed(decimals)
-        : Math.floor(count).toLocaleString("en-NG")}
+      {decimals > 0 ? count.toFixed(decimals) : Math.floor(count).toLocaleString("en-NG")}
       {suffix}
     </span>
   )
