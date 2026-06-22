@@ -20,7 +20,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
 
   return (
     <>
-      <div style={{ opacity: showSplash ? 0 : 1, transition: "opacity 0.4s ease-in-out" }}>
+      <div>
         {children}
       </div>
 

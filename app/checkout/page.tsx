@@ -137,13 +137,12 @@ export default function CheckoutPage() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <Button asChild className="flex-1 h-12 rounded-2xl font-bold text-white"
-              style={{ backgroundColor: "var(--color-brand-600)" }}>
-              <Link href="/dashboard/orders">Track Order</Link>
-            </Button>
-            <Button asChild variant="outline" className="flex-1 h-12 rounded-2xl font-bold">
-              <Link href="/products">Continue Shopping</Link>
-            </Button>
+            <Link href="/dashboard/orders"
+              className="flex-1 inline-flex items-center justify-center h-12 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+              style={{ backgroundColor: "var(--color-brand-600)" }}>Track Order</Link>
+            <Link href="/products"
+              className="flex-1 inline-flex items-center justify-center h-12 rounded-2xl font-bold border-2 transition-all hover:opacity-80"
+              style={{ borderColor: "var(--border)", color: "var(--foreground)" }}>Continue Shopping</Link>
           </div>
         </div>
       </PageWrapper>
@@ -157,10 +156,9 @@ export default function CheckoutPage() {
         <h1 className="text-2xl font-black mb-4" style={{ color: "var(--foreground)" }}>
           Your cart is empty
         </h1>
-        <Button asChild className="rounded-2xl font-bold text-white px-8"
-          style={{ backgroundColor: "var(--color-brand-600)" }}>
-          <Link href="/products">Browse Products</Link>
-        </Button>
+        <Link href="/products"
+          className="inline-flex items-center justify-center rounded-2xl font-bold text-white px-8 h-12 transition-all hover:opacity-90"
+          style={{ backgroundColor: "var(--color-brand-600)" }}>Browse Products</Link>
       </PageWrapper>
     )
   }

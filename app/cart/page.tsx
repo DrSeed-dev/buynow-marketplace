@@ -7,7 +7,6 @@ import { useCartStore } from "@/store/cartStore"
 import { useWishlistStore } from "@/store/wishlistStore"
 import { formatNaira } from "@/lib/constants"
 import { PageWrapper } from "@/components/common/PageWrapper"
-import { Button } from "@/components/ui/button"
 
 export default function CartPage() {
   const items      = useCartStore((s) => s.items)
@@ -37,10 +36,9 @@ export default function CartPage() {
             You haven&apos;t added anything yet. Start shopping!
           </p>
         </div>
-        <Button asChild className="h-12 px-8 rounded-2xl font-bold text-white"
-          style={{ backgroundColor: "var(--color-brand-600)" }}>
-          <Link href="/products">Browse Products</Link>
-        </Button>
+        <Link href="/products"
+          className="inline-flex items-center justify-center h-12 px-8 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+          style={{ backgroundColor: "var(--color-brand-600)" }}>Browse Products</Link>
       </PageWrapper>
     )
   }

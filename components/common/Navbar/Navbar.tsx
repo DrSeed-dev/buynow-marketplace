@@ -60,7 +60,7 @@ export function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full border-b backdrop-blur-md"
+      className="sticky top-0 z-40 w-full border-b backdrop-blur-md"
       style={{
         backgroundColor: "color-mix(in oklch, var(--background) 85%, transparent)",
         borderColor: "var(--border)",

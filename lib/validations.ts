@@ -12,7 +12,7 @@ export const registerSchema = z
       .regex(/[0-9]/, "Must contain at least one number"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
     role: z.enum(["shopper", "vendor"], {
-      errorMap: () => ({ message: "Please select an account type" }),
+      error: () => ({ message: "Please select an account type" }),
     }),
     terms: z.boolean().refine((val) => val === true, {
       message: "You must accept the terms and conditions",

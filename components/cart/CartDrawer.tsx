@@ -7,7 +7,6 @@ import Image from "next/image"
 import { X, ShoppingCart, Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
 import { useCartStore } from "@/store/cartStore"
 import { formatNaira } from "@/lib/constants"
-import { Button } from "@/components/ui/button"
 
 export function CartDrawer() {
   const [isOpen,  setIsOpen]  = useState(false)
@@ -89,12 +88,10 @@ export function CartDrawer() {
                 Add items to your cart to get started
               </p>
             </div>
-            <Button onClick={() => setIsOpen(false)}
-              className="mt-2 rounded-2xl font-bold text-white px-8"
-              style={{ backgroundColor: "var(--color-brand-600)" }}
-              asChild>
-              <Link href="/products">Browse Products</Link>
-            </Button>
+            <Link href="/products"
+              onClick={() => setIsOpen(false)}
+              className="mt-2 inline-flex items-center justify-center rounded-2xl font-bold text-white px-8 h-10 transition-all hover:opacity-90"
+              style={{ backgroundColor: "var(--color-brand-600)" }}>Browse Products</Link>
           </div>
         ) : (
           <>

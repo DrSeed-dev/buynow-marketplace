@@ -143,7 +143,7 @@ export default function RegisterPage() {
             { value: "vendor",  icon: Store,       label: "Sell",  sub: "Open a store" },
           ].map((opt) => (
             <button key={opt.value} type="button"
-              onClick={() => setValue("role", opt.value)}
+              onClick={() => setValue("role", opt.value as "shopper" | "vendor")}
               className="flex flex-col items-center gap-2 p-4 rounded-2xl border-2
                 transition-all duration-200"
               style={{
